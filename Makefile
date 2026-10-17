@@ -1,3 +1,5 @@
+XCODEBUILD_FLAGS ?=
+
 .PHONY: test test-package test-app
 
 test: test-package test-app
@@ -10,4 +12,5 @@ test-app:
 		-project FlagCompanion/FlagCompanion.xcodeproj \
 		-scheme FlagCompanion \
 		-destination 'platform=macOS' \
-		-quiet
+		-quiet \
+		$(XCODEBUILD_FLAGS)
