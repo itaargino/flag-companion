@@ -94,7 +94,7 @@ enum SlugError: Error {
 - Every new function gets a test. Every bug fix gets a regression test.
 - External I/O (file system, processes, clock) is replaced with named fake types, such as `FakeFileSystem`, never inline stubs.
 - Tests follow F.I.R.S.T.: fast, independent, repeatable, self-validating, timely.
-- All tests run with a single command: `make test` (coming in backlog item E0).
+- All tests run with a single command: `make test`.
 
 ## Dependencies
 
