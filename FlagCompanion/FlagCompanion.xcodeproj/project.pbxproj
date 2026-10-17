@@ -6,6 +6,12 @@
 	objectVersion = 110;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		0B1EFDAB308400760015EB02 /* ChallengeLibrary in Frameworks */ = {isa = PBXBuildFile; productRef = 0B1EFDAA308400760015EB02 /* ChallengeLibrary */; };
+		0B1EFDAD308400760015EB02 /* LogStore in Frameworks */ = {isa = PBXBuildFile; productRef = 0B1EFDAC308400760015EB02 /* LogStore */; };
+		0B1EFDAF308400760015EB02 /* SessionKit in Frameworks */ = {isa = PBXBuildFile; productRef = 0B1EFDAE308400760015EB02 /* SessionKit */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		0BB677B13083CFC600790C77 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -38,6 +44,9 @@
 		0BB677A03083CFC500790C77 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				0B1EFDAB308400760015EB02 /* ChallengeLibrary in Frameworks */,
+				0B1EFDAF308400760015EB02 /* SessionKit in Frameworks */,
+				0B1EFDAD308400760015EB02 /* LogStore in Frameworks */,
 			);
 		};
 		0BB677AD3083CFC600790C77 /* Frameworks */ = {
@@ -83,6 +92,11 @@
 				0BB677A53083CFC500790C77 /* FlagCompanion */,
 			);
 			name = FlagCompanion;
+			packageProductDependencies = (
+				0B1EFDAA308400760015EB02 /* ChallengeLibrary */,
+				0B1EFDAC308400760015EB02 /* LogStore */,
+				0B1EFDAE308400760015EB02 /* SessionKit */,
+			);
 			productName = FlagCompanion;
 			productReference = 0BB677A33083CFC500790C77 /* FlagCompanion.app */;
 			productType = "com.apple.product-type.application";
@@ -136,6 +150,9 @@
 			);
 			mainGroup = 0BB6779A3083CFC500790C77;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				0B1EFDA9308400760015EB02 /* XCLocalSwiftPackageReference "../FlagCompanionKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0BB677A43083CFC500790C77 /* Products */;
 			projectDirPath = "";
@@ -440,6 +457,28 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		0B1EFDA9308400760015EB02 /* XCLocalSwiftPackageReference "../FlagCompanionKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../FlagCompanionKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		0B1EFDAA308400760015EB02 /* ChallengeLibrary */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ChallengeLibrary;
+		};
+		0B1EFDAC308400760015EB02 /* LogStore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = LogStore;
+		};
+		0B1EFDAE308400760015EB02 /* SessionKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SessionKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 0BB6779B3083CFC500790C77 /* Project object */;
 	validationLevel = 1;
