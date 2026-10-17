@@ -372,10 +372,13 @@ flag-companion/
 │   ├── FlagCompanion.xcodeproj
 │   ├── FlagCompanion/          SwiftUI app: windows, menus, views
 │   └── FlagCompanionTests/     app tests
-├── Packages/                   (planned)
-│   ├── SessionKit/             OSC parser, state machine, events
-│   ├── LogStore/               append-only JSONL, reading, encryption (v0.2)
-│   └── Workspace/              CTF and challenge folders, metadata
+├── FlagCompanionKit/           Swift package with the app's logic, no UI
+│   ├── Package.swift
+│   ├── Sources/
+│   │   ├── SessionKit/         OSC parser, state machine, events
+│   │   ├── LogStore/           append-only JSONL, reading, encryption (v0.2)
+│   │   └── ChallengeLibrary/   CTF and challenge folders, metadata
+│   └── Tests/                  one test target per module
 ├── Resources/shell/            (planned) zsh integration scripts
 ├── docs/
 │   ├── spec-v0.1.md            this specification
@@ -403,10 +406,10 @@ There are 14 epics, in the suggested order of execution. Each one ends in a veri
 - [x] Create the `flag-companion` repository on GitHub with MIT license and Swift `.gitignore`
 - [x] Create the Xcode project for the macOS app (SwiftUI, macOS 27, Swift 6, Swift Testing)
 - [x] Disable App Sandbox and enable Hardened Runtime
-- [ ] Create the local packages `SessionKit`, `LogStore` and `Workspace`, each with one passing test
-- [ ] Add this specification as `docs/spec-v0.1.md`
-- [ ] Write ADR 0001 "Disable App Sandbox"
-- [ ] Write `CONTRIBUTING.md` with workflow and code style
+- [x] Create the local package `FlagCompanionKit` with the modules `SessionKit`, `LogStore` and `ChallengeLibrary`, each with one passing test
+- [x] Add this specification as `docs/spec-v0.1.md`
+- [x] Write ADR 0001 "Disable App Sandbox"
+- [x] Write `CONTRIBUTING.md` with workflow and code style
 - [ ] Initial README: what it is, "in development" status, how to build
 - [ ] Create milestones E0 to E13 and the issues in this backlog
 - [ ] CI with GitHub Actions running the tests
@@ -426,7 +429,7 @@ There are 14 epics, in the suggested order of execution. Each one ends in a veri
 
 **Done when:** the spike runs zsh and vim in a usable way and you can explain the role of the master side, the slave side and the line discipline.
 
-### E2 — Workspace: folders and library
+### E2 — Challenge library: folders and library screen
 
 - [ ] `CTF` and `Challenge` models with `Codable` for `ctf.json` and `challenge.json`
 - [ ] Function that builds a slug from a name (lowercase, hyphens, no accents)
@@ -436,7 +439,7 @@ There are 14 epics, in the suggested order of execution. Each one ends in a veri
 - [ ] Ignore folders without JSON and report invalid JSON without crashing
 - [ ] Library screen: list of CTFs, challenges with status and category, create buttons
 - [ ] Open the folder in Finder from the menu
-- [ ] `Workspace` tests with a temporary folder
+- [ ] `ChallengeLibrary` tests with a temporary folder
 
 **Done when:** you can create one CTF and three challenges in the app, see everything in Finder with the right structure and reopen the app with the list intact.
 
