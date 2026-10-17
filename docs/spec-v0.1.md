@@ -410,10 +410,10 @@ There are 14 epics, in the suggested order of execution. Each one ends in a veri
 - [x] Add this specification as `docs/spec-v0.1.md`
 - [x] Write ADR 0001 "Disable App Sandbox"
 - [x] Write `CONTRIBUTING.md` with workflow and code style
-- [ ] Initial README: what it is, "in development" status, how to build
-- [ ] Create milestones E0 to E13 and the issues in this backlog
-- [ ] CI with GitHub Actions running the tests
-- [ ] Single test command (`make test`)
+- [x] Initial README: what it is, "in development" status, how to build
+- [x] Create milestones E0 to E13 and the issues in this backlog
+- [x] CI with GitHub Actions running the tests
+- [x] Single test command (`make test`)
 
 **Done when:** the app opens an empty window, tests run in CI and the README explains the project.
 
