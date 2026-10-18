@@ -33,6 +33,9 @@ int main(void) {
 
 	count = read(slave_fd, buffer, sizeof buffer);
 	print_bytes("slave received", buffer, count);
+	
+	count = read(master_fd, buffer, sizeof buffer);
+	print_bytes("master received", buffer, count);
 
 	close(master_fd);
 	close(slave_fd);
