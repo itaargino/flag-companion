@@ -14,7 +14,9 @@ int main(void) {
 
 	if (child_pid == 0) {
 		printf("child: pid %d, parent %d\n", getpid(), getppid());
-		return EXIT_SUCCESS;
+		execlp("ls", "ls", "-l", NULL);
+		perror("execlp");
+		return EXIT_FAILURE;
 	}
 
 	printf("parent: pid %d, created child %d\n", getpid(), child_pid);
