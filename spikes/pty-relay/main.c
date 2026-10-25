@@ -1,6 +1,8 @@
+#include <stdbool.h>
+#include <termios.h>
+#include <sys/select.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -22,6 +24,50 @@ static void run_shell_on_slave(int slave_fd) {
     _exit(EXIT_FAILURE);
 }
 
+static bool copy_bytes(int from_fd, int to_fd) {
+    char buffer[256];
+    ssize_t count = read(from_fd, buffer, sizeof buffer);
+    if (count <= 0) {
+        return false;
+    }
+    write(to_fd, buffer, count);
+    return true;
+}
+
+static void relay_until_shell_exits(int master_fd) {
+    while(true) {
+        fd_set readable;
+        FD_ZERO(&readable);
+        FD_SET(STDIN_FILENO, &readable);
+        FD_SET(master_fd, &readable);
+
+        if (select(master_fd + 1, &readable, NULL, NULL, NULL) == -1) {
+            perror("select");
+            return;
+        }
+
+        if (FD_ISSET(STDIN_FILENO, &readable) && !copy_bytes(STDIN_FILENO, master_fd)) {
+            return;
+        }
+
+        if (FD_ISSET(master_fd, &readable) && !copy_bytes(master_fd, STDOUT_FILENO)) {
+            return;
+        }
+    }
+}
+
+static void enter_raw_mode(struct termios *original) {
+    tcgetattr(STDIN_FILENO, original);
+
+    struct termios raw = *original;
+    cfmakeraw(&raw);
+    tcsetattr(STDIN_FILENO, TCSANOW, &raw);
+}
+
+static void restore_terminal(const struct termios *original) {
+    tcsetattr(STDIN_FILENO, TCSANOW, original);
+}
+
 int main(void) {
     int master_fd;
     int slave_fd;
@@ -41,23 +87,16 @@ int main(void) {
         close(master_fd);
         run_shell_on_slave(slave_fd);
     }
-
+    
     close(slave_fd);
 
-    const char *typed_text = "echo hi; exit\n";
-    write(master_fd, typed_text, strlen(typed_text));
-
-    char buffer[256];
-    ssize_t count;
-    while ((count = read(master_fd, buffer, sizeof buffer)) > 0) {
-        write(STDOUT_FILENO, buffer, count);
-    }
-
-    if (count == -1) {
-        perror("read");
-    }
+    struct termios original_terminal;
+    enter_raw_mode(&original_terminal);
+    relay_until_shell_exits(master_fd);
+    restore_terminal(&original_terminal);
 
     int status;
+
     waitpid(child_pid, &status, 0);
     fprintf(stderr, "child exit status: %d\n", WEXITSTATUS(status));
 
