@@ -31,9 +31,7 @@ private let newChallengeJSON = """
 
 // The spec stores dates as ISO 8601 with offset; JSONDecoder's default expects seconds since 2001.
 private func decodeChallenge(from json: String) throws -> Challenge {
-    let decoder = JSONDecoder()
-    decoder.dateDecodingStrategy = .iso8601
-    return try decoder.decode(Challenge.self, from: Data(json.utf8))
+    try MetadataJSON.decoder().decode(Challenge.self, from: Data(json.utf8))
 }
 
 @Test func solvedChallengeIsDecodedFromSpecExample() throws {
@@ -58,8 +56,6 @@ private func decodeChallenge(from json: String) throws -> Challenge {
 
 @Test func challengeSurvivesEncodingAndDecoding() throws {
     let original = try decodeChallenge(from: solvedChallengeJSON)
-    let encoder = JSONEncoder()
-    encoder.dateEncodingStrategy = .iso8601
-    let json = String(decoding: try encoder.encode(original), as: UTF8.self)
+    let json = String(decoding: try MetadataJSON.encoder().encode(original), as: UTF8.self)
     #expect(try decodeChallenge(from: json) == original)
 }
