@@ -3,10 +3,7 @@ import Foundation
 /// The metadata of one challenge, stored as `challenge.json` in the challenge folder.
 ///
 /// ```swift
-/// let decoder = JSONDecoder()
-/// decoder.dateDecodingStrategy = .iso8601
-/// let challenge = try decoder.decode(Challenge.self, from: data)
-/// print(challenge.status) // solved
+/// let challenge = try MetadataJSON.decoder().decode(Challenge.self, from: data)
 /// ```
 public struct Challenge: Codable, Equatable {
     public let formatVersion: Int
