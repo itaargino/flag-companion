@@ -93,6 +93,7 @@ enum SlugError: Error {
 - Tests use [Swift Testing](https://developer.apple.com/xcode/swift-testing/) (`@Test`, `#expect`).
 - Every new function gets a test. Every bug fix gets a regression test.
 - External I/O (file system, processes, clock) is replaced with named fake types, such as `FakeFileSystem`, never inline stubs.
+- Exception: code that creates, writes or scans files is tested against a real temporary folder (`withTemporaryFolder`), because permissions, atomic writes and directory contents are behavior of the operating system that a fake would hide.
 - Tests follow F.I.R.S.T.: fast, independent, repeatable, self-validating, timely.
 - All tests run with a single command: `make test`.
 
