@@ -8,7 +8,7 @@ import Foundation
 /// let slug = try Slug("picoCTF 2026")
 /// print(slug.value) // "picoctf-2026"
 /// ```
-public struct Slug: Equatable {
+public struct Slug: Equatable, Sendable {
     public let value: String
 
     /// Builds a slug, or throws when the name has no ASCII letters or digits.
