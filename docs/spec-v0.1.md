@@ -516,7 +516,7 @@ There are 14 epics, in the suggested order of execution. Each one ends in a veri
 - [x] Create the app's `ZDOTDIR` folder in Application Support with the `.zshenv` that hands `ZDOTDIR` back to the user and registers the hooks
 - [x] Test with the default prompt, with Oh My Zsh and with Powerlevel10k (`A`, `C` and `D` correct in all; `B` missing with Powerlevel10k)
 - [x] Choose and document how the command text is sent: `OSC 133;C;cmdline_url=` instead of an app-specific OSC number, since `7770` collides with termprompt
-- [ ] In `SessionKit`, an OSC parser that works with bytes arriving in arbitrary chunks
+- [x] In `SessionKit`, an OSC parser that works with bytes arriving in arbitrary chunks (`OSCScanner`)
 - [ ] State machine `idle` → `prompt` → `running` → `idle`
 - [ ] Removal of ANSI sequences, handling of `\r` and trimming of the `PROMPT_SP` line
 - [ ] Output limit with `truncated` and `bytes`
