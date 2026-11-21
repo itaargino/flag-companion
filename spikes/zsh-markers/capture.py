@@ -32,6 +32,12 @@ SCENARIOS = {
         (b"cd /tmp\r", 0.8),  # OSC 7 should follow the new directory
         (b"exit\r", 0.8),
     ],
+    "order": [
+        (b"", 3.0),  # themes such as Powerlevel10k take longer to start
+        (b"print -r -- HOOKS $precmd_functions\r", 1.0),
+        (b"print -r -- HOOKS $precmd_functions\r", 1.0),
+        (b"exit\r", 0.8),
+    ],
     "vim": [
         (b"", 1.5),
         (b"vim -u NONE\r", 1.0),

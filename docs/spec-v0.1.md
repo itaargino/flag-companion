@@ -266,7 +266,7 @@ add-zsh-hook precmd _fc_prompt
 add-zsh-hook preexec _fc_preexec
 ```
 
-The hooks are registered in `.zshenv`, before the user's `.zshrc`, so the user's own hooks run after them. `precmd` is split in two for that reason: `_fc_status` moves itself to the front so `D` reads the real exit code, and `_fc_prompt` moves itself to the end so it can add `B` back after a theme that rebuilds `PS1` before every prompt (such as Powerlevel10k). The new order only applies from the second prompt on, so with those themes the first prompt has no `B`. The parser does not depend on `B`.
+The hooks are registered in `.zshenv`, before the user's `.zshrc`, so the user's own hooks run after them. `precmd` is split in two for that reason: `_fc_status` moves itself to the front, and `_fc_prompt` moves itself to the end so it can add `B` back after a theme that rebuilds `PS1` before every prompt. zsh restores `$?` before each `precmd` function, so `D` reads the real exit code wherever `_fc_status` runs. Powerlevel10k also reorders `precmd_functions` before every prompt and keeps its own hook last, so with it `B` never appears; Oh My Zsh can repeat `B` when it redraws the prompt. The parser does not depend on `B` (tested with the default prompt, Oh My Zsh and Powerlevel10k, see `spikes/zsh-markers/NOTES.md`).
 
 **4. Parser state machine**
 
@@ -514,7 +514,7 @@ There are 14 epics, in the suggested order of execution. Each one ends in a veri
 
 - [x] Spike: run the hook sketch in a regular zsh and see the markers with `cat -v` (`spikes/zsh-markers/`)
 - [x] Create the app's `ZDOTDIR` folder in Application Support with the `.zshenv` that hands `ZDOTDIR` back to the user and registers the hooks
-- [ ] Test with the default prompt, with Oh My Zsh and with Powerlevel10k
+- [x] Test with the default prompt, with Oh My Zsh and with Powerlevel10k (`A`, `C` and `D` correct in all; `B` missing with Powerlevel10k)
 - [x] Choose and document how the command text is sent: `OSC 133;C;cmdline_url=` instead of an app-specific OSC number, since `7770` collides with termprompt
 - [ ] In `SessionKit`, an OSC parser that works with bytes arriving in arbitrary chunks
 - [ ] State machine `idle` → `prompt` → `running` → `idle`

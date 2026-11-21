@@ -63,7 +63,7 @@ The real Starship kept `B` on all 4 prompts, because it sets `PROMPT` only once.
 
 ## Hook order
 
-`precmd_functions` was `prompt_starship_precmd _fc_precmd`: the hooks run in the order they were registered. Our `D` still read the right `$?` after Starship's hook ran, but a user hook that runs a command before ours would change it.
+`precmd_functions` was `prompt_starship_precmd _fc_precmd`: the hooks run in the order they were registered. Our `D` still read the right `$?` after Starship's hook ran. (Later test: zsh restores `$?` before each `precmd` function, so a hook before ours cannot change it either; see "Real themes".)
 
 ## Proposed fix (tested)
 
@@ -88,7 +88,27 @@ Results:
 - Point 5 of "Terminal capture": trim the `PROMPT_SP` line from the end of the output.
 - A command still open when the shell exits (`exit`) is closed by `session_end`.
 
+## Real themes (after the spike)
+
+Run with the app's hooks (`hooks-forward.zsh`) and an isolated `HOME` per case, so nothing in the real `~` was read or changed. Oh My Zsh `c014070` and Powerlevel10k `50a35cc` were shallow clones kept outside the repo; the `order` scenario in `capture.py` prints `precmd_functions`.
+
+| Setup | `C` + command text | `D` codes (`ls`, `false`, `python3`, Ctrl+C) | `B` |
+| --- | --- | --- | --- |
+| Default prompt, empty `HOME` | All commands | 0, 1, 0, 130 | Every prompt |
+| Oh My Zsh, `robbyrussell`, `git` plugin | All commands | 0, 1, 0, 130 | Every prompt, sometimes twice in a row |
+| Powerlevel10k (lean), instant prompt on | All commands | 0, 1, 0, 130 | Never |
+| Oh My Zsh + Powerlevel10k | All commands | 0, 1, 0, 130 | Never |
+
+What this showed:
+
+- **The parser can rely on `A`, `C` and `D` with every setup tested.** The multi-line command, the empty Enter and `exit` behave as in the earlier captures.
+- **Powerlevel10k never has `B`, not only on the first prompt.** It reorders `precmd_functions` itself before every prompt, to `_p9k_do_nothing … _p9k_precmd`, so `_p9k_precmd` always runs after `_fc_prompt` and rebuilds `PS1` without our marker. The two hooks would keep moving each other, so the app does not fight it: the parser already ignores `B`.
+- **Oh My Zsh can emit `B` twice** when the prompt is redrawn without a new command. Another reason not to count on `B`.
+- **zsh restores `$?` before each `precmd` function.** A hook whose only command is `false`, placed before ours, still let ours read the command's real status (`SAW=7` after `(exit 7)`), and `_p9k_do_nothing` (`true`) ran before `_fc_status` without changing `D`. This corrects "Hook order" above: putting `_fc_status` first is not needed for `$?`.
+- **Instant prompt printed no warning** about console output during startup, because our hooks print only in `precmd` and `preexec`.
+- **With an empty `HOME`, the first `D` is `D;1`**, the status left by the startup files. It comes before any command, so the rule that ignores a `D` with no open command covers it.
+
 ## Still open
 
-- Testing with a real Oh My Zsh and a real Powerlevel10k (backlog item). The stand-in theme covers the `PS1` rewrite, but Powerlevel10k's instant prompt prints before `.zshrc` finishes and may need its own check.
+- ~~Testing with a real Oh My Zsh and a real Powerlevel10k~~: done, see "Real themes" below.
 - ~~Choosing the OSC number~~: decided after the spike. `7770` is used by the termprompt project, so the command text moved into `OSC 133;C;cmdline_url=<URL-escaped>` (kitty's extension). `hooks-forward.zsh` now matches the app; `hooks.zsh` and the captures above still show the original sketch.
