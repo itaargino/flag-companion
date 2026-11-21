@@ -54,6 +54,36 @@ private func variables(of launch: ShellLaunch) -> [String: String] {
     #expect(variables(of: launch)["LANG"] == "pt_BR.UTF-8")
 }
 
+private let integrationFolder = URL(
+    filePath: "/Users/me/Library/Application Support/FlagCompanion/zsh",
+    directoryHint: .isDirectory)
+
+@Test func zshStartsFromTheIntegrationFolder() {
+    let launch = ShellLaunch.login(
+        shell: "/bin/zsh", in: filesFolder, integration: integrationFolder, appEnvironment: [:])
+    let shellVariables = variables(of: launch)
+    #expect(shellVariables["ZDOTDIR"] == integrationFolder.path)
+    #expect(shellVariables["FC_USER_ZDOTDIR"] == nil)
+}
+
+@Test func usersOwnZdotdirIsHandedToTheScripts() {
+    let launch = ShellLaunch.login(
+        shell: "/bin/zsh", in: filesFolder, integration: integrationFolder,
+        appEnvironment: ["ZDOTDIR": "/Users/me/.config/zsh"])
+    #expect(variables(of: launch)["FC_USER_ZDOTDIR"] == "/Users/me/.config/zsh")
+}
+
+@Test func withoutIntegrationZdotdirIsNotSet() {
+    let launch = ShellLaunch.login(shell: "/bin/zsh", in: filesFolder, appEnvironment: [:])
+    #expect(variables(of: launch)["ZDOTDIR"] == nil)
+}
+
+@Test func otherShellsIgnoreTheIntegration() {
+    let launch = ShellLaunch.login(
+        shell: "/bin/bash", in: filesFolder, integration: integrationFolder, appEnvironment: [:])
+    #expect(variables(of: launch)["ZDOTDIR"] == nil)
+}
+
 @Test func userShellIsAnExecutable() {
     #expect(FileManager.default.isExecutableFile(atPath: UserShell.path()))
 }

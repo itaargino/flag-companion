@@ -493,7 +493,7 @@ There are 14 epics, in the suggested order of execution. Each one ends in a veri
 ### E5 — Shell integration and parser
 
 - [x] Spike: run the hook sketch in a regular zsh and see the markers with `cat -v` (`spikes/zsh-markers/`)
-- [ ] Create the app's `ZDOTDIR` folder in Application Support with the `.zshenv` that hands `ZDOTDIR` back to the user and registers the hooks
+- [x] Create the app's `ZDOTDIR` folder in Application Support with the `.zshenv` that hands `ZDOTDIR` back to the user and registers the hooks
 - [ ] Test with the default prompt, with Oh My Zsh and with Powerlevel10k
 - [ ] Choose and document the app's own OSC number (check for collisions)
 - [ ] In `SessionKit`, an OSC parser that works with bytes arriving in arbitrary chunks
