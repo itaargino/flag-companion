@@ -431,15 +431,15 @@ There are 14 epics, in the suggested order of execution. Each one ends in a veri
 
 ### E2 — Challenge library: folders and library screen
 
-- [ ] `CTF` and `Challenge` models with `Codable` for `ctf.json` and `challenge.json`
-- [ ] Function that builds a slug from a name (lowercase, hyphens, no accents)
-- [ ] Scan the root folder and build the list of CTFs and challenges
-- [ ] Create a CTF and a challenge with the subfolder structure (`notes/`, `prints/`, `files/`, `logs/`)
-- [ ] Apply permissions `0700` to folders and `0600` to files
-- [ ] Ignore folders without JSON and report invalid JSON without crashing
-- [ ] Library screen: list of CTFs, challenges with status and category, create buttons
-- [ ] Open the folder in Finder from the menu
-- [ ] `ChallengeLibrary` tests with a temporary folder
+- [x] `CTF` and `Challenge` models with `Codable` for `ctf.json` and `challenge.json`
+- [x] Function that builds a slug from a name (lowercase, hyphens, no accents)
+- [x] Scan the root folder and build the list of CTFs and challenges
+- [x] Create a CTF and a challenge with the subfolder structure (`notes/`, `prints/`, `files/`, `logs/`)
+- [x] Apply permissions `0700` to folders and `0600` to files
+- [x] Ignore folders without JSON and report invalid JSON without crashing
+- [x] Library screen: list of CTFs, challenges with status and category, create buttons
+- [x] Open the folder in Finder from the menu
+- [x] `ChallengeLibrary` tests with a temporary folder
 
 **Done when:** you can create one CTF and three challenges in the app, see everything in Finder with the right structure and reopen the app with the list intact.
 
