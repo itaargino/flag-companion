@@ -36,18 +36,21 @@ final class ChallengeWorkspace {
 
     @ObservationIgnored private var nextTabNumber = 1
     @ObservationIgnored private let shell: String
+    @ObservationIgnored private let shellIntegration: URL?
     @ObservationIgnored private let makeTerminal: @MainActor () -> any TerminalEmulating
     @ObservationIgnored private let confirmClosingRunningTab: @MainActor (TerminalTab) -> Bool
 
     init(
         challengeFolder: URL,
         shell: String = UserShell.path(),
+        shellIntegration: URL? = InstalledShellIntegration.folder,
         makeTerminal: @escaping @MainActor () -> any TerminalEmulating = { SwiftTermTerminal() },
         confirmClosingRunningTab: @escaping @MainActor (TerminalTab) -> Bool = TabCloseConfirmation
             .ask
     ) {
         self.challengeFolder = challengeFolder
         self.shell = shell
+        self.shellIntegration = shellIntegration
         self.makeTerminal = makeTerminal
         self.confirmClosingRunningTab = confirmClosingRunningTab
     }
@@ -66,7 +69,8 @@ final class ChallengeWorkspace {
         tab.terminal.onExit = { [weak self, weak tab] in
             if let tab { self?.remove(tab) }
         }
-        tab.terminal.start(ShellLaunch.login(shell: shell, in: filesFolder))
+        tab.terminal.start(
+            ShellLaunch.login(shell: shell, in: filesFolder, integration: shellIntegration))
         tabs.append(tab)
         selectedTabID = tab.id
     }

@@ -23,9 +23,14 @@ public struct ShellLaunch: Equatable, Sendable {
 
     /// Starts `shell` as a login shell, like macOS Terminal does, so `/etc/zprofile`
     /// and `~/.zprofile` run and tools installed with Homebrew are on the PATH.
+    ///
+    /// When `integration` is the folder from `ShellIntegration.install` and the
+    /// shell is zsh, zsh starts from that folder and loads the app's hooks.
+    /// Other shells ignore it and run without markers.
     public static func login(
         shell: String,
         in directory: URL,
+        integration: URL? = nil,
         appEnvironment: [String: String] = ProcessInfo.processInfo.environment
     ) -> ShellLaunch {
         let shellName = URL(filePath: shell).lastPathComponent
@@ -33,13 +38,26 @@ public struct ShellLaunch: Equatable, Sendable {
             executable: shell,
             // A leading hyphen in argv[0] is the Unix convention for "login shell".
             processName: "-" + shellName,
-            environment: shellEnvironment(shell: shell, appEnvironment: appEnvironment),
+            environment: shellEnvironment(
+                shell: shell,
+                integration: shellName == "zsh" ? integration : nil,
+                appEnvironment: appEnvironment
+            ),
             currentDirectory: directory.path
         )
     }
 
-    static func shellEnvironment(shell: String, appEnvironment: [String: String]) -> [String] {
+    static func shellEnvironment(
+        shell: String,
+        integration: URL?,
+        appEnvironment: [String: String]
+    ) -> [String] {
         var variables = appEnvironment.filter { inheritedVariables.contains($0.key) }
+        if let integration {
+            variables["ZDOTDIR"] = integration.path
+            // The app's .zshenv hands ZDOTDIR back to this value, or to HOME without one.
+            variables["FC_USER_ZDOTDIR"] = appEnvironment["ZDOTDIR"]
+        }
         variables["TERM"] = "xterm-256color"
         variables["COLORTERM"] = "truecolor"
         variables["TERM_PROGRAM"] = "FlagCompanion"

@@ -21,6 +21,9 @@ private final class FakeTerminal: TerminalEmulating {
 
 private let challengeFolder = URL(filePath: "/tmp/CTFs/pico/enc", directoryHint: .isDirectory)
 
+// Never the real folder in Application Support: tests must not write outside their own files.
+private let shellIntegration = URL(filePath: "/tmp/FlagCompanion/zsh", directoryHint: .isDirectory)
+
 @MainActor
 private final class WorkspaceFixture {
     private(set) var terminals: [FakeTerminal] = []
@@ -29,6 +32,7 @@ private final class WorkspaceFixture {
     private(set) lazy var workspace = ChallengeWorkspace(
         challengeFolder: challengeFolder,
         shell: "/bin/zsh",
+        shellIntegration: shellIntegration,
         makeTerminal: { [unowned self] in
             let terminal = FakeTerminal()
             terminals.append(terminal)
@@ -53,6 +57,14 @@ private final class WorkspaceFixture {
     #expect(launch.currentDirectory == "/tmp/CTFs/pico/enc/files")
     #expect(launch.processName == "-zsh")
     #expect(fixture.workspace.selectedTab?.name == "Terminal 2")
+}
+
+@MainActor
+@Test func newTabStartsZshFromTheIntegrationFolder() throws {
+    let fixture = WorkspaceFixture()
+    fixture.openTabs(1)
+    let launch = try #require(fixture.terminals[0].startedLaunch)
+    #expect(launch.environment.contains("ZDOTDIR=/tmp/FlagCompanion/zsh"))
 }
 
 @MainActor
