@@ -204,10 +204,11 @@ The hooks emit OSC (Operating System Command) sequences, which the terminal does
 | --- | --- | --- |
 | `OSC 133;A` | `precmd`, before the prompt | Prompt started |
 | `OSC 133;B` | End of the prompt (in `PS1`) | User is about to type |
-| `OSC 7770;cmd;<base64>` | `preexec` | Text of the confirmed command (app-specific marker) |
-| `OSC 133;C` | `preexec`, after the command | Output started |
+| `OSC 133;C;cmdline_url=<text>` | `preexec` | Output started, with the confirmed command URL-escaped |
 | `OSC 133;D;<code>` | `precmd`, first thing | Command finished with this exit code |
 | `OSC 7;file://<host><cwd>` | `precmd` | Current directory |
+
+The command text uses the `cmdline_url` extension of `OSC 133;C` from kitty's shell integration instead of an OSC number of the app's own. There is no registry of OSC numbers, and the `7770` first sketched here turned out to be used by the termprompt project. Keeping the text inside `C` also means one marker says both what the command is and that its output starts. URL escaping (rather than kitty's other form, `cmdline=` with `printf %q`) is decoded in Swift with `removingPercentEncoding`, and the escaped text never contains ESC, BEL or `;`.
 
 The app's `.zshenv`:
 
@@ -234,9 +235,30 @@ _fc_prompt() {
   printf '\e]133;A\a'
   [[ $PS1 == *$'\e]133;B'* ]] || PS1="$PS1%{"$'\e]133;B\a'"%}"
 }
+# Byte -> %XX table, built once, so encoding a long command takes
+# milliseconds instead of one printf per character.
+typeset -gA _fc_hex
+() {
+  emulate -L zsh
+  setopt no_multibyte
+  local -i b
+  local hex
+  for (( b = 1; b < 256; b++ )); do
+    printf -v hex '%%%02X' $b
+    _fc_hex[${(#)b}]=$hex
+  done
+}
+# URL-escapes $1 into REPLY, byte by byte, so the command can never
+# contain ESC, BEL or ";" and end the OSC early.
+_fc_urlencode() {
+  emulate -L zsh
+  setopt no_multibyte extended_glob
+  REPLY=${1//(#m)[^A-Za-z0-9._~\/-]/$_fc_hex[$MATCH]}
+}
 _fc_preexec() {
-  printf '\e]7770;cmd;%s\a' "$(printf '%s' "$1" | base64)"
-  printf '\e]133;C\a'
+  local REPLY
+  _fc_urlencode "$1"
+  printf '\e]133;C;cmdline_url=%s\a' "$REPLY"
 }
 autoload -Uz add-zsh-hook
 add-zsh-hook precmd _fc_status
@@ -246,12 +268,10 @@ add-zsh-hook preexec _fc_preexec
 
 The hooks are registered in `.zshenv`, before the user's `.zshrc`, so the user's own hooks run after them. `precmd` is split in two for that reason: `_fc_status` moves itself to the front so `D` reads the real exit code, and `_fc_prompt` moves itself to the end so it can add `B` back after a theme that rebuilds `PS1` before every prompt (such as Powerlevel10k). The new order only applies from the second prompt on, so with those themes the first prompt has no `B`. The parser does not depend on `B`.
 
-The number `7770` is provisional; before settling on it, check that it does not collide with markers from other terminals.
-
 **4. Parser state machine**
 
 - `idle` → receives `A` → `prompt`
-- `prompt` → receives `7770;cmd` → stores the command → receives `C` → writes `command_start` → `running`
+- `prompt` → receives `C` → decodes `cmdline_url` → writes `command_start` → `running`. A `C` without `cmdline_url` still starts a command, with empty text.
 - `running` → accumulates output → receives `D` → writes `command_end` → `idle`
 - A `D` with no open command is ignored. This happens before the first prompt and after every empty Enter, which runs `precmd` without `preexec` and repeats the previous exit code.
 - Bytes between `A` and `C` (the prompt and the line editor's echo of what the user types) are discarded.
@@ -495,7 +515,7 @@ There are 14 epics, in the suggested order of execution. Each one ends in a veri
 - [x] Spike: run the hook sketch in a regular zsh and see the markers with `cat -v` (`spikes/zsh-markers/`)
 - [x] Create the app's `ZDOTDIR` folder in Application Support with the `.zshenv` that hands `ZDOTDIR` back to the user and registers the hooks
 - [ ] Test with the default prompt, with Oh My Zsh and with Powerlevel10k
-- [ ] Choose and document the app's own OSC number (check for collisions)
+- [x] Choose and document how the command text is sent: `OSC 133;C;cmdline_url=` instead of an app-specific OSC number, since `7770` collides with termprompt
 - [ ] In `SessionKit`, an OSC parser that works with bytes arriving in arbitrary chunks
 - [ ] State machine `idle` → `prompt` → `running` → `idle`
 - [ ] Removal of ANSI sequences, handling of `\r` and trimming of the `PROMPT_SP` line
@@ -607,7 +627,7 @@ After v0.1, the project moves through three phases. Each one starts only when th
 **Open decisions**
 
 - [x] Check whether the name Flag Companion is already used on GitHub and the App Store
-- [ ] Final number for the app's own OSC marker
+- [x] Final number for the app's own OSC marker: none, the command text goes in `OSC 133;C;cmdline_url=` (kitty's extension)
 - [ ] Findings as free text (provisional v0.1 decision) or as a list of reorderable cards
 - [ ] How the session view (v0.2) shows highlights and gaps
 - [ ] Whether to pay for the Apple Developer Program to distribute a signed and notarized app

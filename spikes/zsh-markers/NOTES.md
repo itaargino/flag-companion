@@ -91,4 +91,4 @@ Results:
 ## Still open
 
 - Testing with a real Oh My Zsh and a real Powerlevel10k (backlog item). The stand-in theme covers the `PS1` rewrite, but Powerlevel10k's instant prompt prints before `.zshrc` finishes and may need its own check.
-- Choosing the OSC number: `7770` was not checked for collisions yet.
+- ~~Choosing the OSC number~~: decided after the spike. `7770` is used by the termprompt project, so the command text moved into `OSC 133;C;cmdline_url=<URL-escaped>` (kitty's extension). `hooks-forward.zsh` now matches the app; `hooks.zsh` and the captures above still show the original sketch.

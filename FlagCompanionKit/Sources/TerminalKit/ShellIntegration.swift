@@ -74,9 +74,30 @@ public enum ShellIntegration {
           printf '\e]133;A\a'
           [[ $PS1 == *$'\e]133;B'* ]] || PS1="$PS1%{"$'\e]133;B\a'"%}"
         }
+        # Byte -> %XX table, built once, so encoding a long command takes
+        # milliseconds instead of one printf per character.
+        typeset -gA _fc_hex
+        () {
+          emulate -L zsh
+          setopt no_multibyte
+          local -i b
+          local hex
+          for (( b = 1; b < 256; b++ )); do
+            printf -v hex '%%%02X' $b
+            _fc_hex[${(#)b}]=$hex
+          done
+        }
+        # URL-escapes $1 into REPLY, byte by byte, so the command can never
+        # contain ESC, BEL or ";" and end the OSC early.
+        _fc_urlencode() {
+          emulate -L zsh
+          setopt no_multibyte extended_glob
+          REPLY=${1//(#m)[^A-Za-z0-9._~\/-]/$_fc_hex[$MATCH]}
+        }
         _fc_preexec() {
-          printf '\e]7770;cmd;%s\a' "$(printf '%s' "$1" | base64)"
-          printf '\e]133;C\a'
+          local REPLY
+          _fc_urlencode "$1"
+          printf '\e]133;C;cmdline_url=%s\a' "$REPLY"
         }
         autoload -Uz add-zsh-hook
         add-zsh-hook precmd _fc_status

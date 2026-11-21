@@ -127,6 +127,27 @@ private func runZsh(
     }
 }
 
+@Test func preexecSendsTheCommandURLEscapedInsideOSC133C() throws {
+    try withTemporaryFolder { root in
+        let integration = try ShellIntegration.install(in: root.appending(path: "FlagCompanion"))
+        let home = root.appending(path: "home")
+        try FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
+
+        // Accent, ";", newline, ESC and BEL: none may reach the OSC unescaped,
+        // or the command could end the marker early.
+        let output = try runZsh(
+            #"_fc_preexec $'echo \'á\' ; nc host 1337\n\e]0;x\a'"#,
+            interactive: true, integration: integration, home: home)
+
+        let prefix = "\u{1B}]133;C;cmdline_url="
+        #expect(output.hasPrefix(prefix))
+        #expect(output.hasSuffix("\u{07}"))
+        let payload = output.dropFirst(prefix.count).dropLast()
+        #expect(payload.allSatisfy { $0.isASCII && $0 != ";" && !$0.isNewline })
+        #expect(payload.removingPercentEncoding == "echo 'á' ; nc host 1337\n\u{1B}]0;x\u{07}")
+    }
+}
+
 @Test func scriptsRunWithoutTheHooks() throws {
     try withTemporaryFolder { root in
         let integration = try ShellIntegration.install(in: root.appending(path: "FlagCompanion"))
