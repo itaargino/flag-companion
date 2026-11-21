@@ -12,8 +12,9 @@
 #include <util.h>
 
 // Runs in the child: turns the slave side into this process's terminal,
-// then replaces the process with zsh. Never returns.
-static void run_shell_on_slave(int slave_fd) {
+// then replaces the process with the given command. Never returns.
+// command is a NULL-terminated list, like argv: command[0] is the program.
+static void run_command_on_slave(int slave_fd, char *const command[]) {
     setsid();
     ioctl(slave_fd, TIOCSCTTY, 0);
 
@@ -22,8 +23,8 @@ static void run_shell_on_slave(int slave_fd) {
     dup2(slave_fd, STDERR_FILENO);
     close(slave_fd);
 
-    execlp("zsh", "zsh", NULL);
-    perror("execlp");
+    execvp(command[0], command);
+    perror("execvp");
     _exit(EXIT_FAILURE);
 }
 
@@ -122,7 +123,12 @@ static void restore_terminal(const struct termios *original) {
     tcsetattr(STDIN_FILENO, TCSANOW, original);
 }
 
-int main(void) {
+// With no arguments, runs zsh. Otherwise runs the arguments as a command,
+// for example: ./pty-relay container run -it --rm alpine sh
+int main(int argc, char *argv[]) {
+    char *default_command[] = {"zsh", NULL};
+    char *const *command = argc > 1 ? &argv[1] : default_command;
+
     int master_fd;
     int slave_fd;
 
@@ -140,7 +146,7 @@ int main(void) {
 
     if (child_pid == 0) {
         close(master_fd);
-        run_shell_on_slave(slave_fd);
+        run_command_on_slave(slave_fd, command);
     }
 
     close(slave_fd);
