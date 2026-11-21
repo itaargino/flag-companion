@@ -1,0 +1,1 @@
+export FC_USER_ZSHENV_LOADED=1

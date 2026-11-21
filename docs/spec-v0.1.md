@@ -194,7 +194,9 @@ Every chunk of bytes read from the PTY goes to two places: the SwiftTerm emulato
 
 **3. Shell integration without touching `~/.zshrc`**
 
-The app starts zsh with the `ZDOTDIR` variable pointing to its own folder in `~/Library/Application Support/FlagCompanion/zsh/`. That folder's `.zshrc` first loads the user's `~/.zshrc` and then registers the hooks. The user keeps their prompt, aliases and plugins, and none of their files are changed.
+The app starts zsh with the `ZDOTDIR` variable pointing to its own folder in `~/Library/Application Support/FlagCompanion/zsh/`. That folder holds only a `.zshenv`, the first startup file zsh reads. It sets `ZDOTDIR` back to the user's value (`$HOME` when they had none), loads the user's `.zshenv` and registers the hooks. zsh reads `ZDOTDIR` again before each startup file, so it then loads the user's `.zprofile`, `.zshrc` and `.zlogin` from the usual place. The user keeps their prompt, aliases, plugins, `PATH` and history, and none of their files are changed.
+
+A `.zshrc` in the app's folder that loads `~/.zshrc` is not enough: zsh would read every startup file from the app's folder, so `~/.zprofile` (where Homebrew usually sets `PATH`) and `~/.zlogin` would never load, and macOS would point `HISTFILE` at the app's folder (validated in the E5 spike, `spikes/zsh-markers/`).
 
 The hooks emit OSC (Operating System Command) sequences, which the terminal does not draw:
 
@@ -207,39 +209,60 @@ The hooks emit OSC (Operating System Command) sequences, which the terminal does
 | `OSC 133;D;<code>` | `precmd`, first thing | Command finished with this exit code |
 | `OSC 7;file://<host><cwd>` | `precmd` | Current directory |
 
-Hook sketch, to be validated in E5:
+The app's `.zshenv`:
 
 ```zsh
-_fc_precmd() {
+ZDOTDIR="${FC_USER_ZDOTDIR:-$HOME}"
+[[ -f "$ZDOTDIR/.zshenv" ]] && source "$ZDOTDIR/.zshenv"
+[[ -o interactive ]] && source "<app folder>/zsh/hooks.zsh"
+```
+
+`FC_USER_ZDOTDIR` is set by the app to the user's own `ZDOTDIR` when they had one.
+
+The hooks, validated in the E5 spike:
+
+```zsh
+_fc_status() {
   local ec=$?
   printf '\e]133;D;%s\a' "$ec"
+  # Keep _fc_status first, to read $? before any other hook, and _fc_prompt
+  # last, to run after any theme has rebuilt PS1.
+  precmd_functions=(_fc_status ${precmd_functions:#_fc_(status|prompt)} _fc_prompt)
+}
+_fc_prompt() {
   printf '\e]7;file://%s%s\a' "$HOST" "$PWD"
   printf '\e]133;A\a'
+  [[ $PS1 == *$'\e]133;B'* ]] || PS1="$PS1%{"$'\e]133;B\a'"%}"
 }
 _fc_preexec() {
   printf '\e]7770;cmd;%s\a' "$(printf '%s' "$1" | base64)"
   printf '\e]133;C\a'
 }
 autoload -Uz add-zsh-hook
-add-zsh-hook precmd _fc_precmd
+add-zsh-hook precmd _fc_status
+add-zsh-hook precmd _fc_prompt
 add-zsh-hook preexec _fc_preexec
-PS1="$PS1%{$(printf '\e]133;B\a')%}"
 ```
 
-The number `7770` is provisional; before settling on it, check that it does not collide with markers from other terminals. Prompts that rewrite `PS1` dynamically (themes such as Powerlevel10k) may drop the B marker; this needs testing.
+The hooks are registered in `.zshenv`, before the user's `.zshrc`, so the user's own hooks run after them. `precmd` is split in two for that reason: `_fc_status` moves itself to the front so `D` reads the real exit code, and `_fc_prompt` moves itself to the end so it can add `B` back after a theme that rebuilds `PS1` before every prompt (such as Powerlevel10k). The new order only applies from the second prompt on, so with those themes the first prompt has no `B`. The parser does not depend on `B`.
+
+The number `7770` is provisional; before settling on it, check that it does not collide with markers from other terminals.
 
 **4. Parser state machine**
 
 - `idle` → receives `A` → `prompt`
 - `prompt` → receives `7770;cmd` → stores the command → receives `C` → writes `command_start` → `running`
 - `running` → accumulates output → receives `D` → writes `command_end` → `idle`
-- A `D` with no open command (the first prompt) is ignored.
+- A `D` with no open command is ignored. This happens before the first prompt and after every empty Enter, which runs `precmd` without `preexec` and repeats the previous exit code.
+- Bytes between `A` and `C` (the prompt and the line editor's echo of what the user types) are discarded.
 - Output without a preceding `C` (for example, background job messages) becomes a `raw_chunk`.
+- A command still open when the shell exits (`exit` gets `C` but never `D`) is closed by `session_end`.
 
 **5. Output handling**
 
 - ANSI color and cursor sequences are removed before writing; the log stores clean text.
 - `\r` overwriting the same line (progress bars) keeps only the final version of the line.
+- zsh's `PROMPT_SP` (a `%`, a line of spaces and `\r \r`, printed after every command) arrives before `D`, so it lands in the output. After the two rules above it leaves a line of spaces, which is trimmed from the end.
 - Output above the limit (64 KB by default) is truncated, with `truncated: true` and the total byte count.
 
 **6. Full-screen programs**
@@ -469,16 +492,16 @@ There are 14 epics, in the suggested order of execution. Each one ends in a veri
 
 ### E5 — Shell integration and parser
 
-- [ ] Spike: run the hook sketch in a regular zsh and see the markers with `cat -v`
-- [ ] Create the app's `ZDOTDIR` folder in Application Support and the `.zshrc` that loads the user's one and then the hooks
+- [x] Spike: run the hook sketch in a regular zsh and see the markers with `cat -v` (`spikes/zsh-markers/`)
+- [ ] Create the app's `ZDOTDIR` folder in Application Support with the `.zshenv` that hands `ZDOTDIR` back to the user and registers the hooks
 - [ ] Test with the default prompt, with Oh My Zsh and with Powerlevel10k
 - [ ] Choose and document the app's own OSC number (check for collisions)
 - [ ] In `SessionKit`, an OSC parser that works with bytes arriving in arbitrary chunks
 - [ ] State machine `idle` → `prompt` → `running` → `idle`
-- [ ] Removal of ANSI sequences and handling of `\r`
+- [ ] Removal of ANSI sequences, handling of `\r` and trimming of the `PROMPT_SP` line
 - [ ] Output limit with `truncated` and `bytes`
 - [ ] Record real session streams as fixtures in the test target
-- [ ] Tests: simple command, failing command, large output, command without output, Ctrl+C mid-run, chunks split inside an OSC
+- [ ] Tests: simple command, failing command, large output, command without output, Ctrl+C mid-run, empty Enter, multi-line command, `exit`, chunks split inside an OSC
 - [ ] Connect the parser to the terminal stream without blocking the UI
 
 **Done when:** running `ls`, `false` and `python3 -c 'print(1)'` in the app produces exactly three start/end pairs with exit codes 0, 1 and 0, and all fixture tests pass.

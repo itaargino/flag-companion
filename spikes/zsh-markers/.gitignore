@@ -1,0 +1,4 @@
+captures/
+# Written by zsh itself while the spike runs, inside each ZDOTDIR.
+.zsh_history
+.zcompdump*
