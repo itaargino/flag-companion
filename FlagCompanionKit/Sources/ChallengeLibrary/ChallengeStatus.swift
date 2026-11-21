@@ -4,7 +4,7 @@
 /// let status = ChallengeStatus.inProgress
 /// print(status.rawValue) // "in_progress"
 /// ```
-public enum ChallengeStatus: String, Codable {
+public enum ChallengeStatus: String, Codable, CaseIterable, Sendable {
     case todo
     case inProgress = "in_progress"
     case solved
