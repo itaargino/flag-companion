@@ -518,7 +518,7 @@ There are 14 epics, in the suggested order of execution. Each one ends in a veri
 - [x] Choose and document how the command text is sent: `OSC 133;C;cmdline_url=` instead of an app-specific OSC number, since `7770` collides with termprompt
 - [x] In `SessionKit`, an OSC parser that works with bytes arriving in arbitrary chunks (`OSCScanner`)
 - [x] State machine `idle` → `prompt` → `running` → `idle` (`SessionStateMachine`)
-- [ ] Removal of ANSI sequences, handling of `\r` and trimming of the `PROMPT_SP` line
+- [x] Removal of ANSI sequences, handling of `\r` and trimming of the `PROMPT_SP` line (`OutputCleaner`)
 - [ ] Output limit with `truncated` and `bytes`
 - [ ] Record real session streams as fixtures in the test target
 - [ ] Tests: simple command, failing command, large output, command without output, Ctrl+C mid-run, empty Enter, multi-line command, `exit`, chunks split inside an OSC
