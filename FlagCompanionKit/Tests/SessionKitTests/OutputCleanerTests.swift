@@ -58,3 +58,31 @@ private let promptSP = "\u{1B}[1m\u{1B}[7m%\u{1B}[27m\u{1B}[1m\u{1B}[0m" + Strin
 @Test func invalidUTF8BecomesAReplacementCharacter() {
     #expect(OutputCleaner.clean([0x61, 0xFF, 0x62]) == "a\u{FFFD}b")
 }
+
+// MARK: - Truncated output
+
+private func truncated(head: String, tail: String, totalBytes: Int) -> CommandOutput {
+    CommandOutput(head: Array(head.utf8), tail: Array(tail.utf8), totalBytes: totalBytes)
+}
+
+@Test func wholeOutputIsCleanedAsBefore() {
+    #expect(OutputCleaner.clean(CommandOutput(Array("\u{1B}[31mok\u{1B}[0m\r\n".utf8))) == "ok\n")
+}
+
+@Test func truncatedOutputShowsHowManyBytesWereOmitted() {
+    let output = truncated(head: "first\r\nsecond\r\n", tail: "nd\r\nlast\r\n", totalBytes: 1000)
+    #expect(OutputCleaner.clean(output) == "first\nsecond\n[... 979 bytes omitted ...]\nlast\n")
+}
+
+@Test func endStartsAfterItsFirstNewlineSoNoCutSequenceIsLeft() {
+    // The ring began inside `ESC[31m`: "1m" would otherwise be logged as text.
+    let output = truncated(head: "start\r\n", tail: "1merror\u{1B}[0m\r\nfound: sunshine\r\n", totalBytes: 500)
+    #expect(OutputCleaner.clean(output).hasSuffix("omitted ...]\nfound: sunshine\n"))
+}
+
+@Test func endWithNoNewlineDropsOnlyACutLetter() {
+    // "ç" is C3 A7 in UTF-8; the ring kept only A7.
+    let tail: [UInt8] = [0xA7] + Array("ao".utf8)
+    let output = CommandOutput(head: Array("x".utf8), tail: tail, totalBytes: 100)
+    #expect(OutputCleaner.clean(output) == "x\n[... 97 bytes omitted ...]\nao")
+}
