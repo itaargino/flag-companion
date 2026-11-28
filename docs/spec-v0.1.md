@@ -517,7 +517,7 @@ There are 14 epics, in the suggested order of execution. Each one ends in a veri
 - [x] Test with the default prompt, with Oh My Zsh and with Powerlevel10k (`A`, `C` and `D` correct in all; `B` missing with Powerlevel10k)
 - [x] Choose and document how the command text is sent: `OSC 133;C;cmdline_url=` instead of an app-specific OSC number, since `7770` collides with termprompt
 - [x] In `SessionKit`, an OSC parser that works with bytes arriving in arbitrary chunks (`OSCScanner`)
-- [ ] State machine `idle` → `prompt` → `running` → `idle`
+- [x] State machine `idle` → `prompt` → `running` → `idle` (`SessionStateMachine`)
 - [ ] Removal of ANSI sequences, handling of `\r` and trimming of the `PROMPT_SP` line
 - [ ] Output limit with `truncated` and `bytes`
 - [ ] Record real session streams as fixtures in the test target
