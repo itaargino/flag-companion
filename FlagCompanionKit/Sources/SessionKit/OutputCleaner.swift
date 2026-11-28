@@ -21,6 +21,30 @@ public enum OutputCleaner {
         return result
     }
 
+    /// Cleans a finished command's output. When it went over the limit, the
+    /// start and the end are joined by a note with how many bytes are missing.
+    ///
+    /// The end begins wherever the ring buffer happened to cut, maybe inside an
+    /// ANSI sequence or a letter, so it is moved to the start of its first
+    /// full line. With no newline, only the bytes of a cut letter are dropped.
+    public static func clean(_ output: CommandOutput) -> String {
+        guard output.isTruncated else { return clean(output.head) }
+
+        let tail = startingAtALine(output.tail)
+        let omitted = output.omittedBytes + (output.tail.count - tail.count)
+        var text = clean(output.head)
+        if !text.isEmpty, !text.hasSuffix("\n") { text += "\n" }
+        return text + "[... \(omitted) bytes omitted ...]\n" + clean(Array(tail))
+    }
+
+    private static func startingAtALine(_ bytes: [UInt8]) -> ArraySlice<UInt8> {
+        if let newline = bytes.firstIndex(of: UInt8(ascii: "\n")) {
+            return bytes[(newline + 1)...]
+        }
+        // UTF-8 continuation bytes (10xxxxxx) can only follow a letter's first byte.
+        return bytes.drop { (0x80...0xBF).contains($0) }
+    }
+
     // MARK: - Step 1: escape sequences, on bytes
 
     private static let escape: UInt8 = 0x1B

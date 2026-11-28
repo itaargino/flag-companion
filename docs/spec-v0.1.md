@@ -123,7 +123,7 @@ On first launch, a five-step assistant prepares the app for recording. Every cho
 3. **Shell.** The app detects the default shell (`$SHELL`). In v0.1, structured recording only works with zsh; with another shell, it warns that recording will be raw. The app **does not edit** the user's `~/.zshrc` (see "Terminal capture").
 4. **Recording policy.**
     - Record output: yes (default) or commands only.
-    - Output limit per command: 64 KB (default), truncated with a note in the log.
+    - Output limit per command: 64 KB (default), keeping the start and the end with a note in the log.
     - Start new terminals recording: yes (default) or paused.
 5. **Summary.** Shows the choices and a button to create the first CTF.
 
@@ -283,7 +283,7 @@ The hooks are registered in `.zshenv`, before the user's `.zshrc`, so the user's
 - ANSI color and cursor sequences are removed before writing; the log stores clean text.
 - `\r` overwriting the same line (progress bars) keeps only the final version of the line.
 - zsh's `PROMPT_SP` (a `%`, a line of spaces and `\r \r`, printed after every command) arrives before `D`, so it lands in the output. After the two rules above it leaves a line of spaces, which is trimmed from the end.
-- Output above the limit (64 KB by default) is truncated, with `truncated: true` and the total byte count.
+- Output above the limit (64 KB by default) is truncated, with `truncated: true` and the total byte count. The log keeps the first half of the limit and the last half, joined by `[... N bytes omitted ...]`: results often come at the end (a password found by `hydra`) and headers at the start. The end is kept in a ring buffer while the command runs, so memory stays within the limit even under `yes`, and it begins at its first full line, so a cut ANSI sequence or letter is not logged.
 
 **6. Full-screen programs**
 
@@ -519,7 +519,7 @@ There are 14 epics, in the suggested order of execution. Each one ends in a veri
 - [x] In `SessionKit`, an OSC parser that works with bytes arriving in arbitrary chunks (`OSCScanner`)
 - [x] State machine `idle` → `prompt` → `running` → `idle` (`SessionStateMachine`)
 - [x] Removal of ANSI sequences, handling of `\r` and trimming of the `PROMPT_SP` line (`OutputCleaner`)
-- [ ] Output limit with `truncated` and `bytes`
+- [x] Output limit with `truncated` and `bytes` (`HeadTailBuffer`, `CommandOutput`)
 - [ ] Record real session streams as fixtures in the test target
 - [ ] Tests: simple command, failing command, large output, command without output, Ctrl+C mid-run, empty Enter, multi-line command, `exit`, chunks split inside an OSC
 - [ ] Connect the parser to the terminal stream without blocking the UI

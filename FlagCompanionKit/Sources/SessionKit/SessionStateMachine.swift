@@ -6,7 +6,8 @@ public enum SessionEvent: Equatable, Sendable {
     case commandStart(id: String, command: String, directory: String?)
     /// The command finished. `exitCode` is `nil` when the shell never said:
     /// the shell exited (`exit`, a closed `ssh` tab) or a `D` marker was lost.
-    case commandEnd(id: String, exitCode: Int?, output: [UInt8])
+    /// `output` is still raw; `OutputCleaner` turns it into the log's text.
+    case commandEnd(id: String, exitCode: Int?, output: CommandOutput)
     /// Output printed while no command was running, such as a background job
     /// finishing.
     case rawChunk(output: [UInt8])
@@ -22,7 +23,7 @@ public enum SessionEvent: Equatable, Sendable {
 /// | `idle`    | D          | nothing (empty Enter)      | `idle`    |
 /// | `prompt`  | output     | drops it (prompt, typing)  | `prompt`  |
 /// | `prompt`  | C          | emits `commandStart`       | `running` |
-/// | `running` | output     | keeps it                   | `running` |
+/// | `running` | output     | keeps it, within the limit | `running` |
 /// | `running` | D          | emits `commandEnd`         | `idle`    |
 ///
 /// ```swift
@@ -35,20 +36,28 @@ public struct SessionStateMachine: Sendable {
     private enum State: Sendable {
         case idle
         case prompt
-        /// Only this state needs data: the open command and what it printed so far.
-        case running(id: String, output: [UInt8])
+        case running(id: String)
     }
 
     private var state = State.idle
+    /// What the open command printed so far. It lives outside `State` because
+    /// a buffer copied out of an enum case is shared with it, and appending to
+    /// a shared array copies the whole array: on every chunk, up to the limit.
+    private var output: HeadTailBuffer
+    private let outputLimit: Int
     private var directory: String?
     private var commandCount = 0
 
-    public init() {}
+    /// `outputLimit` is the most bytes kept per command (the start and the end).
+    public init(outputLimit: Int = CommandOutputLimit.maxBytesPerCommand) {
+        self.outputLimit = outputLimit
+        output = HeadTailBuffer(limit: outputLimit)
+    }
 
     public mutating func handle(_ piece: ScannedPiece) -> [SessionEvent] {
         switch (state, piece) {
-        case (.running(let id, let output), .output(let bytes)):
-            state = .running(id: id, output: output + bytes)
+        case (.running, .output(let bytes)):
+            output.append(bytes)
             return []
 
         case (.idle, .output(let bytes)):
@@ -85,7 +94,8 @@ public struct SessionStateMachine: Sendable {
             commandCount += 1
             let id = "c\(commandCount)"
             events.append(.commandStart(id: id, command: command, directory: directory))
-            state = .running(id: id, output: [])
+            output = HeadTailBuffer(limit: outputLimit)
+            state = .running(id: id)
             return events
 
         case .commandEnd(let exitCode):
@@ -104,7 +114,7 @@ public struct SessionStateMachine: Sendable {
     }
 
     private func closeOpenCommand(exitCode: Int?) -> [SessionEvent] {
-        guard case .running(let id, let output) = state else { return [] }
-        return [.commandEnd(id: id, exitCode: exitCode, output: output)]
+        guard case .running(let id) = state else { return [] }
+        return [.commandEnd(id: id, exitCode: exitCode, output: output.contents)]
     }
 }

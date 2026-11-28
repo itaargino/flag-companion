@@ -15,8 +15,10 @@ private func directory(_ path: String) -> ScannedPiece { .marker(.currentDirecto
 
 /// Hands every piece to one machine, then ends the session when asked, and
 /// returns all the events in order.
-private func run(_ pieces: [ScannedPiece], thenShellExits: Bool = false) -> [SessionEvent] {
-    var machine = SessionStateMachine()
+private func run(
+    _ pieces: [ScannedPiece], thenShellExits: Bool = false, outputLimit: Int = 1024
+) -> [SessionEvent] {
+    var machine = SessionStateMachine(outputLimit: outputLimit)
     var events = pieces.flatMap { machine.handle($0) }
     if thenShellExits { events += machine.shellExited() }
     return events
@@ -32,18 +34,18 @@ private func run(_ pieces: [ScannedPiece], thenShellExits: Bool = false) -> [Ses
     #expect(
         events == [
             .commandStart(id: "c1", command: "ls", directory: nil),
-            .commandEnd(id: "c1", exitCode: 0, output: bytes("capture.py  hooks.zsh\r\n")),
+            .commandEnd(id: "c1", exitCode: 0, output: CommandOutput(bytes("capture.py  hooks.zsh\r\n"))),
         ])
 }
 
 @Test func outputArrivingInPiecesIsJoinedInOneEnd() {
     let events = run([prompt, command("ls"), output("one "), output("two "), output("three"), end(0)])
-    #expect(events.last == .commandEnd(id: "c1", exitCode: 0, output: bytes("one two three")))
+    #expect(events.last == .commandEnd(id: "c1", exitCode: 0, output: CommandOutput(bytes("one two three"))))
 }
 
 @Test func failingCommandKeepsItsExitCode() {
     let events = run([prompt, command("false"), end(1)])
-    #expect(events.last == .commandEnd(id: "c1", exitCode: 1, output: []))
+    #expect(events.last == .commandEnd(id: "c1", exitCode: 1, output: CommandOutput([])))
 }
 
 @Test func endWithNoOpenCommandIsIgnored() {
@@ -74,19 +76,36 @@ private func run(_ pieces: [ScannedPiece], thenShellExits: Bool = false) -> [Ses
     // If a D is ever lost, the next prompt closes the command instead of the
     // machine staying in `running` and taking the prompt as output.
     let events = run([prompt, command("ls"), output("a\r\n"), prompt, output("isaque@mac ~ % ")])
-    #expect(events.last == .commandEnd(id: "c1", exitCode: nil, output: bytes("a\r\n")))
+    #expect(events.last == .commandEnd(id: "c1", exitCode: nil, output: CommandOutput(bytes("a\r\n"))))
 }
 
 @Test func shellExitClosesTheOpenCommandWithItsOutput() {
     // `exit` sends C, then the shell is gone before it can send D. The same
     // happens when a tab running `ssh` is closed: its output must not be lost.
     let events = run([prompt, command("ssh box"), output("remote session")], thenShellExits: true)
-    #expect(events.last == .commandEnd(id: "c1", exitCode: nil, output: bytes("remote session")))
+    #expect(events.last == .commandEnd(id: "c1", exitCode: nil, output: CommandOutput(bytes("remote session"))))
 }
 
 @Test func shellExitWithNoOpenCommandEmitsNothing() {
     let events = run([prompt, command("ls"), end(0), prompt], thenShellExits: true)
     #expect(events.count == 2)
+}
+
+// MARK: - Output limit
+
+@Test func outputOverTheLimitKeepsItsStartAndEnd() {
+    let events = run([prompt, command("yes"), output("y\n"), output("y\n"), output("y\ny\ny\nend\n")],
+        thenShellExits: true, outputLimit: 8)
+    #expect(
+        events.last
+            == .commandEnd(
+                id: "c1", exitCode: nil,
+                output: CommandOutput(head: bytes("y\ny\n"), tail: bytes("end\n"), totalBytes: 14)))
+}
+
+@Test func eachCommandStartsWithAnEmptyBuffer() {
+    let events = run([prompt, command("a"), output("123456789"), end(0), prompt, command("b"), output("ok"), end(0)], outputLimit: 8)
+    #expect(events.last == .commandEnd(id: "c2", exitCode: 0, output: CommandOutput(bytes("ok"))))
 }
 
 extension SessionEvent {
