@@ -1,0 +1,10 @@
+[1m[7m%[27m[1m[0m                                                                                ]133;D;0]7;file://ctf-box/tmp/flag-companion-fixture-home]133;A[0m[27m[24m[Jctf@box ~ % ]133;B[K[?2004h[?2004l
+[1m[7m%[27m[1m[0m                                                                                ]133;D;0]7;file://ctf-box/tmp/flag-companion-fixture-home]133;A[0m[27m[24m[Jctf@box ~ % ]133;B[K[?2004hssleep 5[?2004l
+]133;C;cmdline_url=sleep%205^C
+[1m[7m%[27m[1m[0m                                                                                ]133;D;130]7;file://ctf-box/tmp/flag-companion-fixture-home]133;A[0m[27m[24m[Jctf@box ~ % ]133;B[K[?2004heecho 'two[?2004l
+[0m[27m[24m[Jquote> [K[?2004hllines'[?2004l
+]133;C;cmdline_url=echo%20%27two%0Alines%27two
+lines
+[1m[7m%[27m[1m[0m                                                                                ]133;D;0]7;file://ctf-box/tmp/flag-companion-fixture-home]133;A[0m[27m[24m[Jctf@box ~ % ]133;B[K[?2004hccd /tmp[?2004l
+]133;C;cmdline_url=cd%20/tmp[1m[7m%[27m[1m[0m                                                                                ]133;D;0]7;file://ctf-box/tmp]133;A[0m[27m[24m[Jctf@box /tmp % ]133;B[K[?2004heexit[?2004l
+]133;C;cmdline_url=exit

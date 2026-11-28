@@ -1,0 +1,4 @@
+# Recorded terminal sessions: the tests need every byte as zsh printed it
+# (\r\n, trailing spaces, escape sequences), so Git must not convert line
+# endings or show them as text diffs.
+*.raw binary
