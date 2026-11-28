@@ -1,0 +1,7 @@
+[1m[7m%[27m[1m[0m                                                                                ]133;D;0]7;file://ctf-box/tmp/flag-companion-fixture-home]133;A[0m[27m[24m[Jctf@box ~ % ]133;B[K[?2004hlls[?2004l
+]133;C;cmdline_url=lsexploit.py	flag.txt	notes.md
+[1m[7m%[27m[1m[0m                                                                                ]133;D;0]7;file://ctf-box/tmp/flag-companion-fixture-home]133;A[0m[27m[24m[Jctf@box ~ % ]133;B[K[?2004hffalse[?2004l
+]133;C;cmdline_url=false[1m[7m%[27m[1m[0m                                                                                ]133;D;1]7;file://ctf-box/tmp/flag-companion-fixture-home]133;A[0m[27m[24m[Jctf@box ~ % ]133;B[K[?2004hppython3 -c 'print(1)'[?2004l
+]133;C;cmdline_url=python3%20-c%20%27print%281%29%271
+[1m[7m%[27m[1m[0m                                                                                ]133;D;0]7;file://ctf-box/tmp/flag-companion-fixture-home]133;A[0m[27m[24m[Jctf@box ~ % ]133;B[K[?2004heexit[?2004l
+]133;C;cmdline_url=exit

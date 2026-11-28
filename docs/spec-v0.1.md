@@ -520,8 +520,8 @@ There are 14 epics, in the suggested order of execution. Each one ends in a veri
 - [x] State machine `idle` → `prompt` → `running` → `idle` (`SessionStateMachine`)
 - [x] Removal of ANSI sequences, handling of `\r` and trimming of the `PROMPT_SP` line (`OutputCleaner`)
 - [x] Output limit with `truncated` and `bytes` (`HeadTailBuffer`, `CommandOutput`)
-- [ ] Record real session streams as fixtures in the test target
-- [ ] Tests: simple command, failing command, large output, command without output, Ctrl+C mid-run, empty Enter, multi-line command, `exit`, chunks split inside an OSC
+- [x] Record real session streams as fixtures in the test target (`scripts/record-session-fixtures.py`, with a fake `HOME` so no user or host name is recorded)
+- [x] Tests: simple command, failing command, large output, command without output, Ctrl+C mid-run, empty Enter, multi-line command, `exit`, chunks split inside an OSC (`SessionFixtureTests`)
 - [ ] Connect the parser to the terminal stream without blocking the UI
 
 **Done when:** running `ls`, `false` and `python3 -c 'print(1)'` in the app produces exactly three start/end pairs with exit codes 0, 1 and 0, and all fixture tests pass.

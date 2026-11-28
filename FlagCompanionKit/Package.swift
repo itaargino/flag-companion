@@ -19,7 +19,10 @@ let package = Package(
         .target(name: "LogStore"),
         .target(name: "ChallengeLibrary"),
         .target(name: "TerminalKit", dependencies: ["SwiftTerm"]),
-        .testTarget(name: "SessionKitTests", dependencies: ["SessionKit"]),
+        .testTarget(
+            name: "SessionKitTests", dependencies: ["SessionKit"],
+            // Real zsh sessions, recorded by scripts/record-session-fixtures.py.
+            resources: [.copy("Fixtures")]),
         .testTarget(name: "LogStoreTests", dependencies: ["LogStore"]),
         .testTarget(name: "ChallengeLibraryTests", dependencies: ["ChallengeLibrary"]),
         .testTarget(name: "TerminalKitTests", dependencies: ["TerminalKit"]),
